@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ragigudda Metro Schedule</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        header {
+            background: #ffc107;
+            padding: 20px;
+            text-align: center;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+        nav {
+            display: flex;
+            justify-content: center;
+            background: #333;
+        }
+        nav button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: #444;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        nav button.active {
+            background: #ffc107;
+            color: black;
+            font-weight: bold;
+        }
+        section {
+            display: none;
+            padding: 20px;
+        }
+        section.active {
+            display: block;
+        }
+        .current-time {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #007bff;
+            color: white;
+        }
+        tr.highlight {
+            background: #fff3cd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Ragigudda Metro Schedule</h1>
+        </header>
+        <nav>
+            <button id="towardsBommasandraBtn" class="active">Towards Bommasandra</button>
+            <button id="towardsRvBtn">Towards RV Road</button>
+        </nav>
+        
+        <section id="towardsBommasandra" class="active">
+            <div class="current-time" id="currentTimeBomma">Current Time: --:--</div>
+            <table id="tableBomma">
+                <thead>
+                    <tr><th>Trip No.</th><th>RV Road Departure</th><th>Ragigudda Arrival</th><th>Status</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+        
+        <section id="towardsRv">
+            <div class="current-time" id="currentTimeRv">Current Time: --:--</div>
+            <table id="tableRv">
+                <thead>
+                    <tr><th>Trip No.</th><th>Bommasandra Departure</th><th>Ragigudda Arrival</th><th>Status</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+    </div>
+
+    <script>
+        // Schedules
+        const scheduleBomma = [
+            { trip:1, rv:"06:30"},{trip:2,rv:"07:07"},{trip:3,rv:"07:32"},{trip:4,rv:"07:57"},{trip:5,rv:"08:22"},
+            {trip:6,rv:"08:47"},{trip:7,rv:"09:12"},{trip:8,rv:"09:37"},{trip:9,rv:"10:02"},{trip:10,rv:"10:27"},
+            {trip:11,rv:"10:52"},{trip:12,rv:"11:17"},{trip:13,rv:"11:42"},{trip:14,rv:"12:07"},{trip:15,rv:"12:32"},
+            {trip:16,rv:"12:57"},{trip:17,rv:"13:22"},{trip:18,rv:"13:47"},{trip:19,rv:"14:12"},{trip:20,rv:"14:37"},
+            {trip:21,rv:"15:02"},{trip:22,rv:"15:27"},{trip:23,rv:"15:52"},{trip:24,rv:"16:17"},{trip:25,rv:"16:42"},
+            {trip:26,rv:"17:07"},{trip:27,rv:"17:32"},{trip:28,rv:"17:57"},{trip:29,rv:"18:22"},{trip:30,rv:"18:47"},
+            {trip:31,rv:"19:12"},{trip:32,rv:"19:37"},{trip:33,rv:"20:02"},{trip:34,rv:"20:27"},{trip:35,rv:"20:52"},
+            {trip:36,rv:"21:17"},{trip:37,rv:"21:42"},{trip:38,rv:"22:07"},{trip:39,rv:"22:42"},{trip:40,rv:"23:22"},
+            {trip:41,rv:"23:55"}
+        ];
+        const scheduleRv = [...scheduleBomma].reverse(); // assume reverse trips same times
+
+        // Travel times
+        const travelTimeFromRv = 3; // RV Road to Ragigudda
+        const travelTimeFromBomma = 26; // Bommasandra to Ragigudda
+
+        function parseTime(t){const [h,m]=t.split(":").map(Number);return h*60+m;}
+        function fmt(m){m=(m+1440)%1440;return ('0'+Math.floor(m/60)).slice(-2)+':'+('0'+m%60).slice(-2);} 
+        function getStatus(arr){const now=new Date();const cur=now.getHours()*60+now.getMinutes();let a=parseTime(arr);if(a<300)a+=1440;return a<cur?"🔴 Passed":a-cur<=10?"🟡 Arriving":"🟢 Scheduled";}  
+        
+        function populate(tableId, schedule, depKey, travel){const tbody=document.querySelector(`#${tableId} tbody`);tbody.innerHTML='';const now=new Date();document.getElementById(tableId==='tableBomma'?'currentTimeBomma':'currentTimeRv').textContent='Current Time: '+now.toLocaleTimeString('en-IN',{hour12:false, timeZone:'Asia/Kolkata'});
+            for(const s of schedule){const dep=s[depKey];const arrM=parseTime(dep)+travel;const arr=fmt(arrM);const status=getStatus(arr);const tr=document.createElement('tr');if(status!=='🔴 Passed' && status!=='🟢 Scheduled' && status!=='🔴 Passed'&& status!=='🟢 Scheduled'&& status!=='🔴 Passed'){}if(status==='🟡 Arriving')tr.classList.add('highlight');tr.innerHTML=`<td>${s.trip}</td><td>${dep}</td><td>${arr}</td><td>${status}</td>`;tbody.appendChild(tr);} }
+        
+        document.getElementById('towardsBommasandraBtn').onclick=()=>{document.getElementById('towardsBommasandra').classList.add('active');document.getElementById('towardsRv').classList.remove('active');document.getElementById('towardsBommasandraBtn').classList.add('active');document.getElementById('towardsRvBtn').classList.remove('active');populate('tableBomma', scheduleBomma, 'rv', travelTimeFromRv);};
+        document.getElementById('towardsRvBtn').onclick=()=>{document.getElementById('towardsRv').classList.add('active');document.getElementById('towardsBommasandra').classList.remove('active');document.getElementById('towardsRvBtn').classList.add('active');document.getElementById('towardsBommasandraBtn').classList.remove('active');populate('tableRv', scheduleRv, 'rv', travelTimeFromBomma);};
+        // Initial load
+        populate('tableBomma', scheduleBomma, 'rv', travelTimeFromRv);
+        setInterval(()=>populate('tableBomma', scheduleBomma, 'rv', travelTimeFromRv),60000);
+        setInterval(()=>populate('tableRv', scheduleRv, 'rv', travelTimeFromBomma),60000);
+    </script>
+</body>
+</html>
